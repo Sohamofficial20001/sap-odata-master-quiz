@@ -268,8 +268,8 @@
                 <label for="part-filter">OData Version</label>
                 <select id="part-filter" class="custom-input">
                     <option value="ALL">V2 + V4 (All questions)</option>
-                    <option value="V2">OData V2 + SAPUI5 (60)</option>
-                    <option value="V4">OData V4 + SAPUI5 (40)</option>
+                    <option value="V2">OData V2 + SAPUI5</option>
+                    <option value="V4">OData V4 + SAPUI5</option>
                 </select>
             </div>
 
@@ -285,11 +285,12 @@
             </div>
 
             <div class="input-group">
-                <label for="q-count">Number of Questions (5–100)</label>
+                <label for="q-count" id="q-count-label">Number of Questions (5–100)</label>
                 <input type="number" id="q-count" class="custom-input"
                        min="5" max="100" value="10" placeholder="10">
             </div>
         </div>
+        <p id="filter-cap-note" class="sub-text" aria-live="polite">Loading question availability…</p>
 
         <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
         <button class="btn" onclick="startQuiz()">Start Challenge</button>
@@ -365,6 +366,53 @@
         return data;
     }
 
+    let currentMaxSelectable = 100;
+    let configRequestVersion = 0;
+
+    async function refreshQuestionCap() {
+        const requestVersion = ++configRequestVersion;
+        const part = document.getElementById('part-filter').value;
+        const difficulty = document.getElementById('difficulty-filter').value;
+        const countInput = document.getElementById('q-count');
+        const countLabel = document.getElementById('q-count-label');
+        const note = document.getElementById('filter-cap-note');
+        const startButton = document.querySelector('#setup-screen .btn');
+
+        note.textContent = 'Checking matching questions…';
+        try {
+            const config = await api('/api/config', { part, difficulty });
+            if (requestVersion !== configRequestVersion) return;
+            currentMaxSelectable = config.maxSelectable;
+            countInput.max = String(currentMaxSelectable);
+            countLabel.textContent = currentMaxSelectable >= 5
+                ? `Number of Questions (5–${currentMaxSelectable})`
+                : 'Number of Questions (unavailable for this filter)';
+            if (currentMaxSelectable >= 5) {
+                const current = Number.parseInt(countInput.value, 10);
+                if (!Number.isInteger(current) || current < 5) countInput.value = '10';
+                if (Number(countInput.value) > currentMaxSelectable) countInput.value = String(currentMaxSelectable);
+                if (Number(countInput.value) < 5) countInput.value = String(Math.min(10, currentMaxSelectable));
+                startButton.disabled = false;
+                note.textContent = `${config.eligibleCount} questions match these filters. You can select up to ${currentMaxSelectable}; the quiz will randomly select that many without repetition.`;
+            } else {
+                countInput.value = '5';
+                startButton.disabled = true;
+                note.textContent = `${config.eligibleCount} questions match these filters. At least 5 matching questions are required.`;
+            }
+        } catch (error) {
+            if (requestVersion !== configRequestVersion) return;
+            currentMaxSelectable = 0;
+            countInput.max = '0';
+            countLabel.textContent = 'Question availability could not be loaded';
+            startButton.disabled = true;
+            note.textContent = `Could not load question counts: ${error.message}`;
+        }
+    }
+
+    document.getElementById('part-filter').addEventListener('change', refreshQuestionCap);
+    document.getElementById('difficulty-filter').addEventListener('change', refreshQuestionCap);
+    refreshQuestionCap();
+
     function showSetupError(message) {
         const errorEl = document.getElementById('error-msg');
         errorEl.textContent = message;
@@ -376,8 +424,8 @@
         const errorEl = document.getElementById('error-msg');
         const count = Number.parseInt(inputEl.value, 10);
 
-        if (!Number.isInteger(count) || count < 5 || count > 100) {
-            showSetupError('⚠️ Please enter between 5 and 100');
+        if (!Number.isInteger(count) || count < 5 || count > currentMaxSelectable) {
+            showSetupError(`⚠️ Please enter between 5 and ${currentMaxSelectable} for the selected filters`);
             inputEl.classList.add('shake');
             setTimeout(() => inputEl.classList.remove('shake'), 500);
             return;
@@ -408,7 +456,7 @@
         } catch (error) {
             showSetupError(`⚠️ ${error.message}. Please try again.`);
         } finally {
-            startButton.disabled = false;
+            startButton.disabled = currentMaxSelectable < 5;
             startButton.textContent = 'Start Challenge';
         }
     }
