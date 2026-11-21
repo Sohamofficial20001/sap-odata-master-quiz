@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP ABAP Master Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Modern Palette */
+            --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #ffffff;
+            --text-secondary: #d1d5db;
+            --accent: #00d2ff;
+            --accent-hover: #3a7bd5;
+            --success: #00b894;
+            --error: #ff7675;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-main);
+            overflow-y: auto; /* Allow scrolling on small screens */
+        }
+
+        /* Glass Container */
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        /* --- SETUP SCREEN --- */
+        .setup-screen { text-align: center; padding: 1rem 0; }
+        .logo-text { font-size: 2.8rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -1px; }
+        .logo-text span { color: var(--accent); }
+        .sub-text { color: var(--text-secondary); margin-bottom: 2.5rem; font-weight: 300; }
+
+        .input-group { position: relative; display: inline-block; margin-bottom: 2rem; }
+        .input-group label { display: block; margin-bottom: 12px; font-weight: 500; letter-spacing: 0.5px; }
+        
+        .custom-input {
+            background: rgba(0,0,0,0.2);
+            border: 2px solid var(--glass-border);
+            color: white;
+            padding: 15px;
+            font-size: 1.5rem;
+            border-radius: 12px;
+            width: 140px;
+            text-align: center;
+            outline: none;
+            transition: 0.3s;
+        }
+        .custom-input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+
+        /* Error Message Shake */
+        .error-msg { color: var(--error); font-size: 0.9rem; margin-top: 10px; height: 20px; opacity: 0; transition: opacity 0.3s; }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+
+        /* --- BUTTONS --- */
+        .btn {
+            background: linear-gradient(90deg, var(--accent), #3a7bd5);
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            text-transform: uppercase;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 210, 255, 0.4); }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            margin-top: 15px;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; box-shadow: none; }
+
+        /* --- QUIZ UI --- */
+        .quiz-ui { display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border); }
+        
+        .progress-box { text-align: left; }
+        .progress-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        .q-number { font-size: 1.5rem; font-weight: 700; }
+
+        .controls { display: flex; gap: 15px; align-items: center; }
+        
+        .timer-badge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-family: monospace;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .close-btn:hover { background: var(--error); transform: rotate(90deg); }
+
+        .question-text { font-size: 1.4rem; margin-bottom: 2rem; line-height: 1.5; font-weight: 500; }
+
+        .options-grid { display: grid; gap: 15px; }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 18px 25px;
+            border-radius: 16px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .option-btn:hover:not([disabled]) { background: rgba(255, 255, 255, 0.15); border-color: var(--accent); transform: translateX(5px); }
+        .option-btn.correct { background: rgba(0, 184, 148, 0.2); border-color: var(--success); color: #55efc4; }
+        .option-btn.wrong { background: rgba(214, 48, 49, 0.2); border-color: var(--error); color: #fab1a0; }
+        .option-btn[disabled] { cursor: default; }
+
+        /* --- RESULTS SCREEN --- */
+        .result-screen { display: none; text-align: center; padding-top: 1rem; }
+        .score-display {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            border: 8px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: rgba(0,0,0,0.2);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.1);
+        }
+        .result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+
+        /* --- REVIEW SECTION --- */
+        .review-container {
+            margin-top: 2rem;
+            text-align: left;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+            background: rgba(0,0,0,0.1);
+            border-radius: 16px;
+        }
+        .review-container.open { max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid var(--glass-border); }
+        
+        /* Custom Scrollbar for review */
+        .review-container::-webkit-scrollbar { width: 8px; }
+        .review-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .review-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .review-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        .review-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid transparent;
+            font-size: 0.95rem;
+        }
+        .review-card.correct { border-left-color: var(--success); }
+        .review-card.wrong { border-left-color: var(--error); }
+        .review-q { font-weight: 600; margin-bottom: 8px; display: block; }
+        .review-ans { display: block; font-size: 0.9rem; margin-top: 4px; opacity: 0.8; }
+        .text-green { color: #55efc4; }
+        .text-red { color: #fab1a0; }
+
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeUp 0.5s ease forwards; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 1.5rem; width: 95%; }
+            .logo-text { font-size: 2rem; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="setup-screen" class="setup-screen fade-in">
+        <h1 class="logo-text">ABAP <span>Mastery</span></h1>
+        <p class="sub-text">Test your SAP Technical Skills</p>
+        
+        <div class="input-group">
+            <label>Number of Questions</label>
+            <input type="number" id="q-count" class="custom-input" min="5" max="70" value="10" placeholder="10">
+            <div id="error-msg" class="error-msg">⚠️ Please enter between 5 and 70</div>
+        </div>
+        <br>
+        <button class="btn" onclick="startQuiz()">Start Challenge</button>
+    </div>
+
+    <div id="quiz-ui" class="quiz-ui">
+        <div class="header">
+            <div class="progress-box">
+                <div class="progress-label">Question</div>
+                <div class="q-number" id="q-tracker">1 / 10</div>
+            </div>
+            <div class="controls">
+                <div class="timer-badge">
+                    <span id="timer">00:00</span>
+                </div>
+                <button class="close-btn" onclick="confirmQuit()" title="Exit Quiz">✕</button>
+            </div>
+        </div>
+
+        <div id="question-container" class="fade-in">
+            <div class="question-text" id="q-text">Loading...</div>
+            <div class="options-grid" id="options-area"></div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="result-screen">
+        <h2 style="margin-bottom: 20px;">Challenge Complete</h2>
+        
+        <div class="score-display">
+            <span id="final-score">0%</span>
+        </div>
+        
+        <h3 id="score-text" style="color: var(--accent); margin-bottom: 10px;">Evaluating...</h3>
+        <p id="score-details" style="color: var(--text-secondary);">You got 0 out of 0 correct</p>
+        
+        <div class="result-actions">
+            <button class="btn" onclick="resetApp()">Try Again</button>
+            <button class="btn btn-outline" onclick="toggleReview()">Review Answers ⬇</button>
+        </div>
+
+        <div id="review-container" class="review-container">
+            </div>
+    </div>
+
+</div>
+
+
+<script>
+    // The browser receives questions and options only. Answer keys stay in the Worker.
+    const API_BASE = "https://abap-mastery-quiz-api.abap-mastery.workers.dev";
+
+    let quizSet = [];
+    let userAnswers = [];
+    let currentIdx = 0;
+    let timerInterval;
+    let totalTime = 0;
+    let attemptId = null;
+    let isFinishing = false;
+
+    async function api(path, body) {
+        const response = await fetch(`${API_BASE}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+        return data;
+    }
+
+    function showSetupError(message) {
+        const errorEl = document.getElementById('error-msg');
+        errorEl.textContent = message;
+        errorEl.style.opacity = '1';
+    }
+
+    async function startQuiz() {
+        const inputEl = document.getElementById('q-count');
+        const errorEl = document.getElementById('error-msg');
+        const count = Number.parseInt(inputEl.value, 10);
+
+        if (!Number.isInteger(count) || count < 5 || count > 70) {
+            showSetupError('⚠️ Please enter between 5 and 70');
+            inputEl.classList.add('shake');
+            setTimeout(() => inputEl.classList.remove('shake'), 500);
+            return;
+        }
+
+        errorEl.style.opacity = '0';
+        const startButton = document.querySelector('#setup-screen .btn');
+        startButton.disabled = true;
+        startButton.textContent = 'Loading...';
+
+        try {
+            const data = await api('/api/start', { count });
+            attemptId = data.attemptId;
+            quizSet = data.questions;
+            userAnswers = Array(quizSet.length).fill(null);
+            currentIdx = 0;
+            isFinishing = false;
+            totalTime = data.durationSeconds;
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('quiz-ui').style.display = 'block';
+
+            startTimer();
+            loadQuestion();
+        } catch (error) {
+            showSetupError(`⚠️ ${error.message}. Please try again.`);
+        } finally {
+            startButton.disabled = false;
+            startButton.textContent = 'Start Challenge';
+        }
+    }
+
+    function confirmQuit() {
+        if (confirm("Are you sure you want to quit the quiz? Progress will be lost.")) {
+            resetApp();
+        }
+    }
+
+    function resetApp() {
+        clearInterval(timerInterval);
+        attemptId = null;
+        isFinishing = false;
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('review-container').classList.remove('open');
+
+        const setup = document.getElementById('setup-screen');
+        setup.style.display = 'block';
+        setup.classList.remove('fade-in');
+        void setup.offsetWidth;
+        setup.classList.add('fade-in');
+    }
+
+    function loadQuestion() {
+        if (currentIdx >= quizSet.length) {
+            endGame();
+            return;
+        }
+
+        const q = quizSet[currentIdx];
+        const container = document.getElementById('question-container');
+        container.classList.remove('fade-in');
+        void container.offsetWidth;
+        container.classList.add('fade-in');
+
+        document.getElementById('q-tracker').innerText = `${currentIdx + 1} / ${quizSet.length}`;
+        document.getElementById('q-text').innerText = q.q;
+
+        const optsArea = document.getElementById('options-area');
+        optsArea.innerHTML = '';
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optsArea.appendChild(btn);
+        });
+    }
+
+    async function checkAnswer(selectedIndex, btn) {
+        if (userAnswers[currentIdx] !== null || isFinishing) return;
+
+        const answeredIndex = currentIdx;
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        btn.style.borderColor = 'var(--accent)';
+        btn.style.background = 'rgba(0, 210, 255, 0.18)';
+
+        try {
+            // The Worker records the answer but does not reveal whether it is correct.
+            await api('/api/answer', {
+                attemptId,
+                index: answeredIndex,
+                choice: selectedIndex
+            });
+            userAnswers[answeredIndex] = selectedIndex;
+
+            setTimeout(() => {
+                if (isFinishing) return;
+                currentIdx++;
+                if (currentIdx < quizSet.length) loadQuestion();
+                else endGame();
+            }, 450);
+        } catch (error) {
+            document.getElementById('score-text').innerText = 'Answer could not be saved';
+            document.getElementById('score-details').innerText =
+                `${error.message}. Please restart the quiz.`;
+            document.getElementById('quiz-ui').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+            clearInterval(timerInterval);
+            isFinishing = true;
+        }
+    }
+
+    function startTimer() {
+        const timerDisplay = document.getElementById('timer');
+        clearInterval(timerInterval);
+        updateTimerDisplay(totalTime, timerDisplay);
+
+        timerInterval = setInterval(() => {
+            totalTime--;
+            updateTimerDisplay(totalTime, timerDisplay);
+            if (totalTime <= 0) endGame();
+        }, 1000);
+    }
+
+    function updateTimerDisplay(time, display) {
+        const safeTime = Math.max(0, time);
+        const m = Math.floor(safeTime / 60);
+        const sec = safeTime % 60;
+        display.innerText = `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        display.style.color = safeTime < 10 ? '#ff7675' : 'white';
+    }
+
+    async function endGame() {
+        if (isFinishing || !attemptId) return;
+        isFinishing = true;
+        clearInterval(timerInterval);
+
+        const quizUi = document.getElementById('quiz-ui');
+        quizUi.style.display = 'none';
+        const resultScreen = document.getElementById('result-screen');
+        resultScreen.style.display = 'block';
+        document.getElementById('score-text').innerText = 'Evaluating...';
+        document.getElementById('score-details').innerText = 'Checking your answers securely...';
+
+        try {
+            const result = await api('/api/finish', { attemptId });
+            document.getElementById('final-score').innerText = `${result.percentage}%`;
+            document.getElementById('score-details').innerText =
+                `You got ${result.score} out of ${result.total} correct`;
+
+            const txt = document.getElementById('score-text');
+            if (result.percentage >= 80) txt.innerText = "🏆 SAP Expert Status!";
+            else if (result.percentage >= 50) txt.innerText = "👍 Good, keep going.";
+            else txt.innerText = "📚 Needs Improvement";
+
+            renderReview(result.review);
+        } catch (error) {
+            document.getElementById('score-text').innerText = 'Could not retrieve results';
+            document.getElementById('score-details').innerText =
+                `${error.message}. Check your connection and use Try Again.`;
+        }
+    }
+
+    function renderReview(review) {
+        const container = document.getElementById('review-container');
+        container.innerHTML = '';
+
+        review.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = `review-card ${item.isCorrect ? 'correct' : 'wrong'}`;
+
+            const question = document.createElement('span');
+            question.className = 'review-q';
+            question.textContent = `Q${index + 1}: ${item.question}`;
+            card.appendChild(question);
+
+            const chosen = document.createElement('span');
+            chosen.className = `review-ans ${item.isCorrect ? 'text-green' : 'text-red'}`;
+            chosen.textContent = item.userChoice === null
+                ? '— Not answered'
+                : `${item.isCorrect ? '✅' : '❌'} You answered: ${item.userChoice}`;
+            card.appendChild(chosen);
+
+            if (!item.isCorrect) {
+                const correct = document.createElement('span');
+                correct.className = 'review-ans text-green';
+                correct.textContent = `👉 Correct: ${item.correctChoice}`;
+                card.appendChild(correct);
+            }
+            container.appendChild(card);
+        });
+    }
+
+    function toggleReview() {
+        const container = document.getElementById('review-container');
+        container.classList.toggle('open');
+        if (container.classList.contains('open')) {
+            setTimeout(() => container.scrollIntoView({ behavior: 'smooth' }), 300);
+        }
+    }
+</script>
+
+
+</body>
+</html>
