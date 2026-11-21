@@ -261,7 +261,7 @@
     
     <div id="setup-screen" class="setup-screen fade-in">
         <h1 class="logo-text">OData <span>Mastery</span></h1>
-        <p class="sub-text">SAP OData V2, OData V4 &amp; SAPUI5 Interview Challenge</p>
+        <p class="sub-text">SAP OData V2, OData V4 &amp; SAPUI5 Challenge</p>
 
         <div class="setup-controls">
             <div class="input-group">
@@ -393,11 +393,13 @@
                 if (Number(countInput.value) > currentMaxSelectable) countInput.value = String(currentMaxSelectable);
                 if (Number(countInput.value) < 5) countInput.value = String(Math.min(10, currentMaxSelectable));
                 startButton.disabled = false;
-                note.textContent = `${config.eligibleCount} questions match these filters. You can select up to ${currentMaxSelectable}; the quiz will randomly select that many without repetition.`;
+                // note.textContent = `${config.eligibleCount} questions match these filters. You can select up to ${currentMaxSelectable}; the quiz will randomly select that many without repetition.`;
+                note.textContent = `Maximum selectable: ${currentMaxSelectable} questions.`;
             } else {
                 countInput.value = '5';
                 startButton.disabled = true;
-                note.textContent = `${config.eligibleCount} questions match these filters. At least 5 matching questions are required.`;
+                // note.textContent = `${config.eligibleCount} questions match these filters. At least 5 matching questions are required.`;
+                note.textContent = 'Not enough questions available for this filter. Please select different filters.';
             }
         } catch (error) {
             if (requestVersion !== configRequestVersion) return;
