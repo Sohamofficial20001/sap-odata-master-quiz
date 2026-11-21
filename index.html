@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAP ABAP Master Quiz</title>
+    <title>SAP OData Master Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -51,6 +51,39 @@
 
         /* --- SETUP SCREEN --- */
         .setup-screen { text-align: center; padding: 1rem 0; }
+
+        .setup-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            max-width: 680px;
+            margin: 0 auto 25px;
+        }
+        .setup-controls .input-group {
+            display: block;
+            width: 100%;
+            margin: 0;
+        }
+        .setup-controls .input-group label {
+            display: block;
+            margin-bottom: 12px;
+        }
+        .setup-controls .custom-input {
+            display: block;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        @media (max-width: 600px) {
+            .setup-controls {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            .setup-controls .custom-input {
+                max-width: 100%;
+            }
+        }
+
         .logo-text { font-size: 2.8rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -1px; }
         .logo-text span { color: var(--accent); }
         .sub-text { color: var(--text-secondary); margin-bottom: 2.5rem; font-weight: 300; }
@@ -229,31 +262,36 @@
     <div id="setup-screen" class="setup-screen fade-in">
         <h1 class="logo-text">OData <span>Mastery</span></h1>
         <p class="sub-text">SAP OData V2, OData V4 &amp; SAPUI5 Interview Challenge</p>
-        
-        <div class="input-group">
-            <label for="part-filter">OData Version</label>
-            <select id="part-filter" class="custom-input" style="width: min(320px, 100%); font-size: 1rem;">
-                <option value="ALL">V2 + V4 (All questions)</option>
-                <option value="V2">OData V2 + SAPUI5 (60)</option>
-                <option value="V4">OData V4 + SAPUI5 (40)</option>
-            </select>
-        </div>
-        <div class="input-group" style="margin-top:18px;">
-            <label for="difficulty-filter">Difficulty</label>
-            <select id="difficulty-filter" class="custom-input" style="width: min(320px, 100%); font-size: 1rem;">
-                <option value="ALL">All difficulty levels</option>
-                <option value="Basic">Basic</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Architect-level">Architect-level</option>
-            </select>
-            <div class="input-group" style="margin-top:18px;">
-                <label for="q-count">Number of Questions (5–100)</label>
-                <input type="number" id="q-count" class="custom-input" min="5" max="100" value="10" placeholder="10">
+
+        <div class="setup-controls">
+            <div class="input-group">
+                <label for="part-filter">OData Version</label>
+                <select id="part-filter" class="custom-input">
+                    <option value="ALL">V2 + V4 (All questions)</option>
+                    <option value="V2">OData V2 + SAPUI5 (60)</option>
+                    <option value="V4">OData V4 + SAPUI5 (40)</option>
+                </select>
             </div>
-            <div id="error-msg" class="error-msg">⚠️ Please enter between 5 and 100</div>
+
+            <div class="input-group">
+                <label for="difficulty-filter">Difficulty</label>
+                <select id="difficulty-filter" class="custom-input">
+                    <option value="ALL">All difficulty levels</option>
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Architect-level">Architect-level</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="q-count">Number of Questions (5–100)</label>
+                <input type="number" id="q-count" class="custom-input"
+                       min="5" max="100" value="10" placeholder="10">
+            </div>
         </div>
-        <br>
+
+        <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
         <button class="btn" onclick="startQuiz()">Start Challenge</button>
     </div>
 
@@ -312,11 +350,16 @@
     let isFinishing = false;
 
     async function api(path, body) {
-        const response = await fetch(`${API_BASE}${path}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
+        let response;
+        try {
+            response = await fetch(`${API_BASE}${path}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+        } catch (networkError) {
+            throw new Error("Could not reach the quiz server. Check the Worker URL, CORS settings, and network connection.");
+        }
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
         return data;
